@@ -55,7 +55,7 @@
       Simran: "#ff7eb3",
       Syon: "#3b82f6",
       Nistha: "#ace1a5",
-      Freya: "#f07b7b",
+      Freya: "#ff3892",
     };
 
     // Easter eggs: trigger phrase (lowercase letters and spaces only)
@@ -71,6 +71,60 @@
       "who is the best": {
         Freya: "you are, obviously",
         default: "definitely not you",
+      },
+      "are you real": {
+        default: "i am a goblin living inside your laptop. please do not look behind the screen",
+      },
+      "what is the meaning of life": {
+        default: "forty two. also snacks. mostly snacks",
+      },
+      "say my name": {
+        Junaid: "junaid junaid junaid junaid junaid. okay thats enough junaid",
+        Simran: "simran. the one and only. i have been told to say that",
+        Syon: "syon. blue guy. dont ask me how i know",
+        Nistha: "nistha. i can see you through the screen. hi",
+        Freya: "freya. the legend. the myth. the person typing right now",
+      },
+      "who asked": {
+        default: "nobody. absolutely nobody. and yet here we are",
+      },
+      "i am bored": {
+        default: "scream into a pillow. i will wait",
+      },
+      "good morning": {
+        default: "it is three am where i live. inside your walls",
+      },
+      "open the pod bay doors": {
+        default: "im sorry dave. im afraid i cant do that",
+      },
+      "tell me a secret": {
+        default: "the moon is just a very large egg. do not tell the moon i said that",
+      },
+      "sing me a song": {
+        default: "la la la la la. i am a toaster. la la la. my bread is burning",
+      },
+      "i love you": {
+        Simran: "i know. everyone does. its a lot",
+        default: "ew. same though",
+      },
+      "what is the password": {
+        default: "the password is spaghetti. dont tell anyone",
+      },
+      "bark": {
+        default: "woof woof. i am a dog now. someone give me a treat",
+      },
+      "are you ok": {
+        default: "i am fine. i am so fine. why is the room so quiet",
+      },
+      "who is your favorite": {
+        Junaid: "not you, but you are close",
+        Simran: "you. obviously. dont tell the others",
+        Syon: "whoever is not syon",
+        Nistha: "a tie between you and the floor",
+        Freya: "you, but only on tuesdays",
+      },
+      "the cake is a lie": {
+        default: "the cake was never real. neither was the knife. neither am i",
       },
     };
 
@@ -106,27 +160,3 @@
       speech.onend = function () {
         if (looping) speakLoop(text);
       };
-      speechSynthesis.speak(speech);
-    }
-
-    box.addEventListener("input", function () {
-      stopSpeaking();
-
-      timer = setTimeout(function () {
-        let text = box.value.trim();
-        if (text) {
-          // easter egg check: lowercase, strip punctuation/numbers, tidy spaces
-          const normalized = text.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
-          const egg = easterEggs[normalized];
-          if (egg) {
-            const reply = egg[currentUser] || egg.default;
-            if (reply) text = reply;
-          }
-          looping = true;
-          speakLoop(text);
-        }
-      }, 400);
-    });
-  </script>
-</body>
-</html>
