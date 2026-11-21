@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Speak Yo</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; padding: 40px; }
+    textarea { width: 80%; max-width: 500px; height: 120px; font-size: 18px; padding: 10px; }
+    .hidden { display: none; }
+    .people { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
+    .people button { width: 220px; padding: 14px; font-size: 20px; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+    .people button:hover { filter: brightness(0.9); }
+    .who { color: #555; }
+    .who button { background: none; border: none; color: #0066cc; text-decoration: underline; cursor: pointer; font-size: inherit; }
+
+    /* name colors */
+    .people button[data-name="Junaid"] { background: #ff8c1a; }
+    .people button[data-name="Simran"] { background: #ff7eb3; }
+    .people button[data-name="Syon"]   { background: #3b82f6; }
+    .people button[data-name="Nistha"] { background: #ace1a5; color: #333; }
+    .people button[data-name="Freya"]  { background: #f07b7b; }
+  </style>
+</head>
+<body>
+  <div id="pick-screen">
+    <h1>who are you?</h1>
+    <div class="people">
+      <button data-name="Junaid">Junaid</button>
+      <button data-name="Simran">Simran</button>
+      <button data-name="Syon">Syon</button>
+      <button data-name="Nistha">Nistha</button>
+      <button data-name="Freya">Freya</button>
+    </div>
+  </div>
+
+  <div id="speak-screen" class="hidden">
+    <h1>speak yo</h1>
+    <p class="who">you are <strong id="who-name"></strong> <button id="change">(change)</button></p>
+    <p>type something and pause for a sec, ill repeat what u said</p>
+    <textarea id="text" placeholder="type here..."></textarea>
+  </div>
+
+  <script>
+    const pickScreen = document.getElementById("pick-screen");
+    const speakScreen = document.getElementById("speak-screen");
+    const whoName = document.getElementById("who-name");
+    const box = document.getElementById("text");
+    let currentUser = null;
+    let timer;
+    let looping = false;
+
+    // name -> color (used for the "you are ___" label)
+    const nameColors = {
+      Junaid: "#ff8c1a",
+      Simran: "#ff7eb3",
+      Syon: "#3b82f6",
+      Nistha: "#ace1a5",
+      Freya: "#f07b7b",
+    };
+
+    // Easter eggs: trigger phrase (lowercase letters and spaces only)
+    // -> what each person hears. "default" is the fallback for anyone not listed.
+    const easterEggs = {
+      "junaid is gay": {
+        Nistha: "fuck you nikki",
+        Simran: "yes mommy",
+      },
+      "hello there": {
+        default: "general kenobi",
+      },
+      "who is the best": {
+        Freya: "you are, obviously",
+        default: "definitely not you",
+      },
+    };
+
+    function stopSpeaking() {
+      looping = false;
+      speechSynthesis.cancel();
+      clearTimeout(timer);
+    }
+
+    document.querySelectorAll(".people button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        currentUser = btn.dataset.name;
+        whoName.textContent = currentUser;
+        whoName.style.color = nameColors[currentUser];
+        pickScreen.classList.add("hidden");
+        speakScreen.classList.remove("hidden");
+        box.value = "";
+        box.focus();
+      });
+    });
+
+    document.getElementById("change").addEventListener("click", function () {
+      stopSpeaking();
+      currentUser = null;
+      speakScreen.classList.add("hidden");
+      pickScreen.classList.remove("hidden");
+    });
+
+    function speakLoop(text) {
+      if (!looping) return;
+      const speech = new SpeechSynthesisUtterance(text);
+
+      speech.onend = function () {
+        if (looping) speakLoop(text);
+      };
+      speechSynthesis.speak(speech);
+    }
+
+    box.addEventListener("input", function () {
+      stopSpeaking();
+
+      timer = setTimeout(function () {
+        let text = box.value.trim();
+        if (text) {
+          // easter egg check: lowercase, strip punctuation/numbers, tidy spaces
+          const normalized = text.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
+          const egg = easterEggs[normalized];
+          if (egg) {
+            const reply = egg[currentUser] || egg.default;
+            if (reply) text = reply;
+          }
+          looping = true;
+          speakLoop(text);
+        }
+      }, 400);
+    });
+  </script>
+</body>
+</html>
