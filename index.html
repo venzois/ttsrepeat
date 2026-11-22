@@ -2,10 +2,16 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Speak Yo</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; padding: 40px; }
-    textarea { width: 80%; max-width: 500px; height: 120px; font-size: 18px; padding: 10px; }
+    body {
+      font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; padding: 40px; margin: 0;
+      min-height: 100vh; box-sizing: border-box;
+      background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
+    }
+    .card { display: inline-block; background: rgba(255, 255, 255, 0.85); border-radius: 16px; padding: 20px 30px; max-width: 90%; }
+    textarea { width: 100%; max-width: 500px; height: 120px; font-size: 18px; padding: 10px; box-sizing: border-box; }
     .hidden { display: none; }
     .people { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .people button { width: 220px; padding: 14px; font-size: 20px; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
@@ -34,10 +40,12 @@
   </div>
 
   <div id="speak-screen" class="hidden">
-    <h1>speak yo. v1.1</h1>
-    <p class="who">you are <strong id="who-name"></strong> <button id="change">(change)</button></p>
-    <p>type something and pause for a sec, ill repeat what u said</p>
-    <textarea id="text" placeholder="type here..."></textarea>
+    <div class="card">
+      <h1>speak yo</h1>
+      <p class="who">you are <strong id="who-name"></strong> <button id="change">(change)</button></p>
+      <p>type something and pause for a sec, ill repeat what u said</p>
+      <textarea id="text" placeholder="type here..."></textarea>
+    </div>
   </div>
 
   <script>
@@ -56,6 +64,15 @@
       Syon: "#3b82f6",
       Nistha: "#ace1a5",
       Freya: "#ff3892",
+    };
+
+    // name -> background image (these files must sit next to index.html)
+    const backgrounds = {
+      Junaid: "junaid.jpg",
+      Simran: "simran.jpg",
+      Syon: "syon.jpg",
+      Nistha: "nistha.jpg",
+      Freya: "freya.jpg",
     };
 
     // Easter eggs: trigger phrase (lowercase letters and spaces only)
@@ -83,7 +100,7 @@
         Simran: "simran, the one and only, i have been told to say that",
         Syon: "seeon, blue guy, dont ask me how i know",
         Nistha: "nikki, i can see you through the screen, hi",
-        Freya: "freya, the myth, the legend, the person typing right now",
+        Freya: "freya, the legend, the myth, the person typing right now",
       },
       "who asked": {
         default: "nobody, absolutely nobody, and yet here we are",
@@ -139,6 +156,7 @@
         currentUser = btn.dataset.name;
         whoName.textContent = currentUser;
         whoName.style.color = nameColors[currentUser];
+        document.body.style.backgroundImage = "url('" + backgrounds[currentUser] + "')";
         pickScreen.classList.add("hidden");
         speakScreen.classList.remove("hidden");
         box.value = "";
@@ -149,6 +167,7 @@
     document.getElementById("change").addEventListener("click", function () {
       stopSpeaking();
       currentUser = null;
+      document.body.style.backgroundImage = "none";
       speakScreen.classList.add("hidden");
       pickScreen.classList.remove("hidden");
     });
