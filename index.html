@@ -25,6 +25,11 @@
     .people button[data-name="Syon"]   { background: #3b82f6; }
     .people button[data-name="Nistha"] { background: #ace1a5; color: #333; }
     .people button[data-name="Freya"]  { background: #ff3892; }
+
+    /* jumpscare overlay */
+    #scare { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
+    #scare img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    #scare .scare-text { position: absolute; bottom: 8%; left: 0; right: 0; text-align: center; color: #fff; font-family: Impact, "Arial Black", sans-serif; font-size: 12vw; letter-spacing: 0.05em; text-shadow: 0 0 20px #f00, 0 0 40px #f00; }
   </style>
 </head>
 <body>
@@ -46,6 +51,11 @@
       <p>type something and pause for a sec, ill repeat what u said</p>
       <textarea id="text" placeholder="type here..."></textarea>
     </div>
+  </div>
+
+  <div id="scare">
+    <img id="scare-img" src="goldenfreddy.jpg" alt="" onerror="this.style.display='none'">
+    <div class="scare-text">IT'S ME</div>
   </div>
 
   <script>
@@ -143,7 +153,68 @@
       "the cake is a lie": {
         default: "the cake was never real, neither was the knife, neither am i",
       },
+      "five nights at freddys": {
+        default: "five nights at freddys, i hope you brought a flashlight, and a lot of courage",
+      },
+      "its me": {
+        default: "its me, its me, its me, its me, did you hear me, its me",
+      },
+      "i always come back": {
+        default: "and so do i, every night, at midnight, standing in the hallway",
+      },
+      "whos there": {
+        default: "freddy, wait no, chica, wait no, its just a cupcake, a very hungry cupcake",
+      },
+      "check the cameras": {
+        default: "camera three is empty, camera three is not empty, camera three is gone",
+      },
+      "close the door": {
+        default: "the door is closed, the power is at one percent, i can hear footsteps, why is it so quiet",
+      },
+      "the power is out": {
+        default: "dun dun dun dun, dun dun dun dun, freddy is at the door and he has a tiny little tune",
+      },
+      "where is foxy": {
+        default: "foxy is running down the hall, he is coming, he is fast, you should have checked the pirate cove",
+      },
+      "chica": {
+        default: "lets eat, cupcake, lets eat, cupcake, lets eat",
+      },
+      "who is the purple guy": {
+        default: "dave miller, apparently, i heard he got a promotion, and a very small suit",
+      },
+      "hello hello": {
+        default: "uh, hello, hello, uh, welcome to your first night, you are going to do great, probably, uh, goodbye",
+      },
+      "security guard": {
+        default: "welcome to your new job, you will be here from midnight to six am, please do not lose your flashlight",
+      },
+      "who is your favorite animatronic": {
+        Junaid: "foxy, obviously, because he runs and you do not",
+        Simran: "chica, because cupcake, and also she looks at you funny",
+        Syon: "freddy, but only when the lights are off",
+        Nistha: "bonnie, because he plays guitar, nikki would love him",
+        Freya: "golden freddy, nobody knows why, he just appears",
+      },
     };
+
+    // 1987 jumpscare: flash the picture + "IT'S ME", then close the page
+    let scared = false;
+    function jumpscare() {
+      if (scared) return;
+      scared = true;
+      stopSpeaking();
+      document.getElementById("scare").style.display = "flex";
+      setTimeout(function () {
+        window.close(); // works only if the browser allows it
+        // fallback: if the tab is still here, blank it out
+        setTimeout(function () {
+          document.body.innerHTML = "";
+          document.body.style.background = "#000";
+          window.location.replace("about:blank");
+        }, 200);
+      }, 1500);
+    }
 
     function stopSpeaking() {
       looping = false;
@@ -190,6 +261,10 @@
         if (text) {
           // easter egg check: lowercase, strip punctuation/numbers, tidy spaces
           const normalized = text.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
+          if (normalized === "nineteen eighty seven" || text.replace(/\s/g, "") === "1987") {
+            jumpscare();
+            return;
+          }
           const egg = easterEggs[normalized];
           if (egg) {
             const reply = egg[currentUser] || egg.default;
