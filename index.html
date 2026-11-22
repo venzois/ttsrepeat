@@ -47,9 +47,10 @@
   <div id="speak-screen" class="hidden">
     <div class="card">
       <h1>speak yo</h1>
-      <p class="who">you are <strong id="who-name"></strong> <button id="change">(change)</button></p>
+      <p class="who">you are <strong id="who-name"></strong> <button id="change">(change)</button> <button id="test">(test voice)</button></p>
       <p>type something and pause for a sec, ill repeat what u said</p>
       <textarea id="text" placeholder="type here..."></textarea>
+      <p id="status" style="color:#b00; font-size:14px; min-height:1em;"></p>
     </div>
   </div>
 
@@ -207,11 +208,12 @@
       document.getElementById("scare").style.display = "flex";
       setTimeout(function () {
         window.close(); // works only if the browser allows it
-        // fallback: if the tab is still here, blank it out
+        // fallback: if the tab is still here, go to a plain black screen
         setTimeout(function () {
           document.body.innerHTML = "";
           document.body.style.background = "#000";
-          window.location.replace("about:blank");
+          document.body.style.backgroundImage = "none";
+          document.title = "";
         }, 200);
       }, 1500);
     }
@@ -228,6 +230,11 @@
         whoName.textContent = currentUser;
         whoName.style.color = nameColors[currentUser];
         document.body.style.backgroundImage = "url('" + backgrounds[currentUser] + "')";
+        // unlock speech (some browsers only allow it after a click)
+        speechSynthesis.getVoices();
+        const warm = new SpeechSynthesisUtterance(" ");
+        warm.volume = 0;
+        speechSynthesis.speak(warm);
         pickScreen.classList.add("hidden");
         speakScreen.classList.remove("hidden");
         box.value = "";
@@ -239,19 +246,58 @@
       stopSpeaking();
       currentUser = null;
       document.body.style.backgroundImage = "none";
+      setStatus("");
       speakScreen.classList.add("hidden");
       pickScreen.classList.remove("hidden");
     });
 
-    function speakLoop(text) {
-      if (!looping) return;
-      const speech = new SpeechSynthesisUtterance(text);
+    // keep a reference so Chrome doesn't throw the voice away mid-loop
+    let currentSpeech = null;
 
-      speech.onend = function () {
-        if (looping) speakLoop(text);
-      };
-      speechSynthesis.speak(speech);
+    function setStatus(msg) {
+      document.getElementById("status").textContent = msg;
     }
+
+    function pickVoice() {
+      const voices = speechSynthesis.getVoices();
+      return voices.find(function (v) { return v.lang && v.lang.toLowerCase().indexOf("en") === 0 && v.default; })
+          || voices.find(function (v) { return v.lang && v.lang.toLowerCase().indexOf("en") === 0; })
+          || voices[0]
+          || null;
+    }
+
+    function speakLoop(text, once) {
+      if (!looping) return;
+      speechSynthesis.resume();
+      currentSpeech = new SpeechSynthesisUtterance(text);
+      const voice = pickVoice();
+      if (voice) {
+        currentSpeech.voice = voice;
+        currentSpeech.lang = voice.lang;
+      } else {
+        currentSpeech.lang = "en-US";
+      }
+
+      const me = currentSpeech;
+      currentSpeech.onstart = function () { setStatus(""); };
+      currentSpeech.onerror = function (e) {
+        if (e.error === "canceled" || e.error === "interrupted") return;
+        looping = false;
+        setStatus("voice problem: " + e.error);
+      };
+      currentSpeech.onend = function () {
+        if (looping && !once && currentSpeech === me) speakLoop(text);
+      };
+      speechSynthesis.speak(currentSpeech);
+    }
+
+    // "(test voice)" button: says one short line so you can check sound works
+    document.getElementById("test").addEventListener("click", function () {
+      stopSpeaking();
+      setStatus("");
+      looping = true;
+      speakLoop("testing, one two three", true);
+    });
 
     box.addEventListener("input", function () {
       stopSpeaking();
