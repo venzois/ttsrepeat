@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Speak Yo</title>
+  <title>untargetted tts</title>
   <style>
     body {
       font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; padding: 40px; margin: 0;
@@ -52,6 +52,7 @@
       <p>type something and pause for a sec, ill repeat what u said</p>
       <textarea id="text" placeholder="type here..."></textarea>
       <p id="status" style="color:#b00; font-size:14px; min-height:1em;"></p>
+      <p id="egg-count" style="font-size:14px; color:#555;"></p>
     </div>
 
     <div id="test-panel">
@@ -224,6 +225,47 @@
       },
     };
 
+    // ---- egg counter (saved in each person's browser) ----
+    // counts every phrase in easterEggs and audioEggs, once each
+    const foundSession = {};
+
+    function eggReply(egg) { return egg[currentUser] || egg.default; }
+
+    function allEggPhrases() {
+      return Object.keys(easterEggs).concat(
+        Object.keys(audioEggs).filter(function (k) { return !(k in easterEggs); })
+      );
+    }
+
+    // an egg counts for this person if it has a reply for them, or it's an audio egg
+    function eggAvailable(phrase) {
+      if (audioEggs[phrase]) return true;
+      return !!(easterEggs[phrase] && eggReply(easterEggs[phrase]));
+    }
+
+    function getFoundEggs() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("eggsFound_" + currentUser));
+        if (saved) return saved;
+      } catch (e) {}
+      return foundSession[currentUser] || [];
+    }
+
+    function saveFoundEgg(phrase) {
+      const found = getFoundEggs();
+      if (found.indexOf(phrase) === -1) found.push(phrase);
+      foundSession[currentUser] = found;
+      try { localStorage.setItem("eggsFound_" + currentUser, JSON.stringify(found)); } catch (e) {}
+    }
+
+    function updateEggCount() {
+      const total = allEggPhrases().filter(eggAvailable).length;
+      const found = getFoundEggs().filter(function (k) { return allEggPhrases().indexOf(k) !== -1 && eggAvailable(k); }).length;
+      document.getElementById("egg-count").textContent = found >= total
+        ? "eggs found: " + total + "/" + total + " - you found them all 🎉"
+        : "eggs found: " + found + "/" + total;
+    }
+
     function stopSpeaking() {
       looping = false;
       speechSynthesis.cancel();
@@ -242,6 +284,7 @@
         currentUser = btn.dataset.name;
         whoName.textContent = currentUser;
         whoName.style.color = nameColors[currentUser];
+        updateEggCount();
         document.body.style.backgroundImage = "url('" + backgrounds[currentUser] + "')";
         // unlock speech (some browsers only allow it after a click)
         speechSynthesis.getVoices();
@@ -353,9 +396,18 @@
           // easter egg check: lowercase, strip punctuation/numbers, tidy spaces
           const normalized = text.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
           const egg = easterEggs[normalized];
+          let foundEgg = false;
           if (egg) {
             const reply = egg[currentUser] || egg.default;
-            if (reply) text = reply;
+            if (reply) {
+              text = reply;
+              foundEgg = true;
+            }
+          }
+          if (audioEggs[normalized]) foundEgg = true;
+          if (foundEgg) {
+            saveFoundEgg(normalized);
+            updateEggCount();
           }
           looping = true;
           if (audioEggs[normalized]) {
