@@ -25,11 +25,6 @@
     .people button[data-name="Syon"]   { background: #3b82f6; }
     .people button[data-name="Nistha"] { background: #ace1a5; color: #333; }
     .people button[data-name="Freya"]  { background: #ff3892; }
-
-    /* jumpscare overlay */
-    #scare { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
-    #scare img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    #scare .scare-text { position: absolute; bottom: 8%; left: 0; right: 0; text-align: center; color: #fff; font-family: Impact, "Arial Black", sans-serif; font-size: 12vw; letter-spacing: 0.05em; text-shadow: 0 0 20px #f00, 0 0 40px #f00; }
   </style>
 </head>
 <body>
@@ -52,11 +47,6 @@
       <textarea id="text" placeholder="type here..."></textarea>
       <p id="status" style="color:#b00; font-size:14px; min-height:1em;"></p>
     </div>
-  </div>
-
-  <div id="scare">
-    <img id="scare-img" src="goldenfreddy.jpg" alt="" onerror="this.style.display='none'">
-    <div class="scare-text">IT'S ME</div>
   </div>
 
   <script>
@@ -199,25 +189,6 @@
       },
     };
 
-    // 1987 jumpscare: flash the picture + "IT'S ME", then close the page
-    let scared = false;
-    function jumpscare() {
-      if (scared) return;
-      scared = true;
-      stopSpeaking();
-      document.getElementById("scare").style.display = "flex";
-      setTimeout(function () {
-        window.close(); // works only if the browser allows it
-        // fallback: if the tab is still here, go to a plain black screen
-        setTimeout(function () {
-          document.body.innerHTML = "";
-          document.body.style.background = "#000";
-          document.body.style.backgroundImage = "none";
-          document.title = "";
-        }, 200);
-      }, 1500);
-    }
-
     function stopSpeaking() {
       looping = false;
       speechSynthesis.cancel();
@@ -307,10 +278,6 @@
         if (text) {
           // easter egg check: lowercase, strip punctuation/numbers, tidy spaces
           const normalized = text.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
-          if (normalized === "nineteen eighty seven" || text.replace(/\s/g, "") === "1987") {
-            jumpscare();
-            return;
-          }
           const egg = easterEggs[normalized];
           if (egg) {
             const reply = egg[currentUser] || egg.default;
