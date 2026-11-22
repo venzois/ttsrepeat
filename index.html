@@ -13,9 +13,20 @@
     .card { display: inline-block; background: rgba(255, 255, 255, 0.85); border-radius: 16px; padding: 20px 30px; max-width: 90%; }
     textarea { width: 100%; max-width: 500px; height: 120px; font-size: 18px; padding: 10px; box-sizing: border-box; }
     .hidden { display: none; }
-    .people { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
-    .people button { width: 220px; padding: 14px; font-size: 20px; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
-    .people button:hover { filter: brightness(0.9); }
+    .pick-title { display: inline-block; background: rgba(255, 255, 255, 0.85); border-radius: 16px; padding: 8px 28px; margin: 10px 0 0; }
+    .people { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 30px; }
+    .people button {
+      width: 150px; padding: 22px 10px; border: none; border-radius: 20px; color: #fff; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      font-size: 20px; font-weight: bold; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .people button .emoji { font-size: 44px; line-height: 1; }
+    .people button:hover { transform: translateY(-6px) scale(1.05); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25); }
+    .people button:active { transform: scale(0.96); }
+
+    /* full-page picture that fades in when you hover a name card */
+    #preview { position: fixed; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 0.3s; z-index: -1; pointer-events: none; }
     .who { color: #555; }
     .who button { background: none; border: none; color: #0066cc; text-decoration: underline; cursor: pointer; font-size: inherit; }
 
@@ -34,14 +45,16 @@
   </style>
 </head>
 <body>
+  <div id="preview"></div>
+
   <div id="pick-screen">
-    <h1>who are you?</h1>
+    <h1 class="pick-title">who's talking?</h1>
     <div class="people">
-      <button data-name="Junaid">Junaid</button>
-      <button data-name="Simran">Simran</button>
-      <button data-name="Syon">Syon</button>
-      <button data-name="Nistha">Nistha</button>
-      <button data-name="Freya">Freya</button>
+      <button data-name="Junaid"><span class="emoji">🧡</span><span>Junaid</span></button>
+      <button data-name="Simran"><span class="emoji">🩷</span><span>Simran</span></button>
+      <button data-name="Syon"><span class="emoji">💙</span><span>Syon</span></button>
+      <button data-name="Nistha"><span class="emoji">💚</span><span>Nistha</span></button>
+      <button data-name="Freya"><span class="emoji">❤️</span><span>Freya</span></button>
     </div>
   </div>
 
@@ -149,7 +162,7 @@
         default: "it is three am where i live, inside your walls",
       },
       "open the pod bay doors": {
-        default: "i am sorry dave, im afraid i cant do that",
+        default: "i am sorry dave, i am afraid i cant do that",
       },
       "tell me a secret": {
         default: "the moon is just a very large egg, do not tell the moon i said that",
@@ -279,8 +292,20 @@
       showTest("waiting for you to type...", "-");
     }
 
+    const preview = document.getElementById("preview");
+
     document.querySelectorAll(".people button").forEach(function (btn) {
+      // hover a card -> the whole page fades to that person's picture
+      btn.addEventListener("mouseenter", function () {
+        preview.style.backgroundImage = "url('" + backgrounds[btn.dataset.name] + "')";
+        preview.style.opacity = 1;
+      });
+      btn.addEventListener("mouseleave", function () {
+        preview.style.opacity = 0;
+      });
+
       btn.addEventListener("click", function () {
+        preview.style.opacity = 0;
         currentUser = btn.dataset.name;
         whoName.textContent = currentUser;
         whoName.style.color = nameColors[currentUser];
