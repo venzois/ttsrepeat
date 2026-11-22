@@ -25,6 +25,12 @@
     .people button[data-name="Syon"]   { background: #3b82f6; }
     .people button[data-name="Nistha"] { background: #ace1a5; color: #333; }
     .people button[data-name="Freya"]  { background: #ff3892; }
+
+    /* testing panel (set SHOW_TEST_PANEL to false in the script to hide it) */
+    #test-panel { position: fixed; top: 20px; right: 20px; width: 230px; background: rgba(0, 0, 0, 0.8); color: #7CFC00; font-family: monospace; font-size: 13px; text-align: left; padding: 12px; border-radius: 10px; z-index: 5; }
+    #test-panel .tag { color: #ff0; font-weight: bold; margin-bottom: 8px; }
+    #test-text { color: #fff; font-size: 15px; word-wrap: break-word; margin: 6px 0; }
+    @media (max-width: 700px) { #test-panel { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; } }
   </style>
 </head>
 <body>
@@ -47,6 +53,13 @@
       <textarea id="text" placeholder="type here..."></textarea>
       <p id="status" style="color:#b00; font-size:14px; min-height:1em;"></p>
     </div>
+
+    <div id="test-panel">
+      <div class="tag">FOR TESTING PURPOSES</div>
+      <div id="test-label">waiting for you to type...</div>
+      <div id="test-text">-</div>
+      <div id="test-count"></div>
+    </div>
   </div>
 
   <script>
@@ -57,6 +70,26 @@
     let currentUser = null;
     let timer;
     let looping = false;
+
+    // true = show the testing panel on the right, false = hide it
+    const SHOW_TEST_PANEL = true;
+    if (!SHOW_TEST_PANEL) document.getElementById("test-panel").style.display = "none";
+
+    let loopCount = 0;
+    let currentAudio = null;
+
+    function showTest(label, text) {
+      document.getElementById("test-label").textContent = label;
+      document.getElementById("test-text").textContent = text;
+      document.getElementById("test-count").textContent = loopCount ? "repeat #" + loopCount : "";
+    }
+
+    // phrases that play an audio file (looped) instead of text-to-speech.
+    // the files must sit next to index.html
+    const audioEggs = {
+      "hello hello": "hellohello.mp3",
+      "i always come back": "ialwayscomeback.mp3",
+    };
 
     // name -> color (used for the "you are ___" label)
     const nameColors = {
@@ -193,6 +226,13 @@
       looping = false;
       speechSynthesis.cancel();
       clearTimeout(timer);
+      if (currentAudio) {
+        currentAudio.onended = null;
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      loopCount = 0;
+      showTest("waiting for you to type...", "-");
     }
 
     document.querySelectorAll(".people button").forEach(function (btn) {
@@ -237,8 +277,10 @@
           || null;
     }
 
-    function speakLoop(text, once) {
+    function speakLoop(text, once, label) {
       if (!looping) return;
+      loopCount++;
+      showTest(label || "now saying (text-to-speech):", text);
       speechSynthesis.resume();
       currentSpeech = new SpeechSynthesisUtterance(text);
       const voice = pickVoice();
@@ -257,9 +299,39 @@
         setStatus("voice problem: " + e.error);
       };
       currentSpeech.onend = function () {
-        if (looping && !once && currentSpeech === me) speakLoop(text);
+        if (looping && !once && currentSpeech === me) speakLoop(text, false, label);
       };
       speechSynthesis.speak(currentSpeech);
+    }
+
+    // loops an audio file; if it can't play (missing file, blocked), says the text instead
+    function playAudioLoop(file, fallbackText) {
+      if (!looping) return;
+      const audio = new Audio(file);
+      currentAudio = audio;
+      let failed = false;
+
+      function fallback() {
+        if (failed || currentAudio !== audio) return;
+        failed = true;
+        currentAudio = null;
+        loopCount = 0;
+        speakLoop(fallbackText, false, "audio file not found (" + file + "), saying text instead:");
+      }
+
+      audio.onended = function () {
+        if (looping && currentAudio === audio) {
+          loopCount++;
+          showTest("now playing audio file:", file);
+          audio.currentTime = 0;
+          audio.play().catch(fallback);
+        }
+      };
+      audio.onerror = fallback;
+
+      loopCount = 1;
+      showTest("now playing audio file:", file);
+      audio.play().catch(fallback);
     }
 
     // "(test voice)" button: says one short line so you can check sound works
@@ -284,7 +356,11 @@
             if (reply) text = reply;
           }
           looping = true;
-          speakLoop(text);
+          if (audioEggs[normalized]) {
+            playAudioLoop(audioEggs[normalized], text);
+          } else {
+            speakLoop(text);
+          }
         }
       }, 400);
     });
